@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qwen-coder-api
+  labels:
+    app: qwen-coder-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: qwen-coder-api
+  template:
+    metadata:
+      labels:
+        app: qwen-coder-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+    spec:
+      containers:
+        - name: qwen-coder-api
+          image: ${DOCKER_REGISTRY}/qwen-coder-api:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: "8Gi"
+              cpu: "2"
+            requests:
+              memory: "4Gi"
+              cpu: "1"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_PATH
+              value: "tuandunghcmut/Qwen25_Coder_MultipleChoice_v4"
+            - name: DEVICE
+              value: "cuda:0"
+            - name: MAX_LENGTH
+              value: "2048"
+            - name: JAEGER_HOST
+              value: "jaeger"
+            - name: JAEGER_PORT
+              value: "6831"
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
