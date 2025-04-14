@@ -1,0 +1,44 @@
+server:
+  global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+  
+  persistentVolume:
+    size: 10Gi
+  
+  service:
+    type: ClusterIP
+
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - prometheus.local
+
+alertmanager:
+  enabled: true
+  persistentVolume:
+    size: 2Gi
+
+prometheus-pushgateway:
+  enabled: false
+
+prometheus-node-exporter:
+  enabled: true
+
+kube-state-metrics:
+  enabled: true
+
+serviceMonitors:
+  - name: qwen-coder-api-monitor
+    selector:
+      matchLabels:
+        app: qwen-coder-api
+    namespaceSelector:
+      matchNames:
+        - default
+    endpoints:
+      - port: http
+        interval: 15s
+        path: /metrics
