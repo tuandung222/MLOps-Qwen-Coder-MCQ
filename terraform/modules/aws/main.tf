@@ -35,7 +35,7 @@ locals {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 3.0"
-  
+
   name                 = "${var.cluster_name}-vpc"
   cidr                 = "10.0.0.0/16"
   azs                  = local.azs
@@ -44,13 +44,13 @@ module "vpc" {
   enable_nat_gateway   = true
   single_nat_gateway   = true
   enable_dns_hostnames = true
-  
+
   # Tags required for EKS
   public_subnet_tags = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/elb"                    = "1"
   }
-  
+
   private_subnet_tags = {
     "kubernetes.io/cluster/${var.cluster_name}" = "shared"
     "kubernetes.io/role/internal-elb"           = "1"
@@ -61,36 +61,36 @@ module "vpc" {
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 18.0"
-  
+
   cluster_name    = var.cluster_name
   cluster_version = var.kubernetes_version
-  
+
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
-  
+
   # Self-managed node groups
   self_managed_node_group_defaults = {
     instance_type                          = var.instance_type
     update_launch_template_default_version = true
   }
-  
+
   self_managed_node_groups = {
     worker_group = {
       min_size     = var.node_count
       max_size     = var.node_count
       desired_size = var.node_count
-      
+
       instance_type = var.instance_type
-      
+
       # Add GPU if needed
       # ami_id        = "ami-0123456789abcdef0" # Deep Learning AMI with GPU support
       # instance_type = "g4dn.xlarge"           # GPU instance
     }
   }
-  
+
   # Ensure IAM Role for Service Accounts (IRSA)
   enable_irsa = true
-  
+
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {
